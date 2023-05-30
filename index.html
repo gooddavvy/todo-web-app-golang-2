@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Todo App</title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+</head>
+<body>
+  <div class="container">
+    <h1 class="mt-4 mb-4">Todo App</h1>
+    <div class="row">
+      <div class="col-md-6">
+        <form>
+          <div class="form-group">
+            <label for="newTodo">Create a new todo item with this form:</label>
+            <input type="text" class="form-control" id="newTodoTitle" placeholder="Enter new todo item title">
+            <input type="text" class="form-control" id="newTodoDesc" placeholder="Enter new todo item description">
+            <input type="date" class="form-control" id="newTodoDueDate" title="Enter new todo item due date">
+            <select class="form-control" id="newTodoComplete" title="Enter new todo item due date">
+                <option value="true">True</option>
+                <option value="false">False</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary">Add Todo</button>
+        </form>
+      </div>
+    </div>
+    <div class="row mt-4">
+      <div class="col-md-6">
+        <ul class="list-group" id="todoList">
+        </ul>
+      </div>
+    </div>
+  </div>
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.10.2/dist/umd/popperjs-core.min.js"
+    integrity="sha384-j/LC0V7gGNhDzIIHjqy8o0Pdrb7nhEkq3sOO+jbh+ZkkbRnRJcT+CpLVo7PYtTfN"
+    crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.min.js"
+    integrity="sha384-48ZUMEuD7b/cSLXbOzjkAdMmwQofQRuCwEiKuCtgJs0sOTsZKSq3ThB0XQ2hpDzP"
+    crossorigin="anonymous"></script>
+  <script>
+    ///\\\\\\\\\\\\\\\\////////////\\\\\\\\\\\\\\\\///////////
+    $(function() {
+      // fetch the todo list API
+      async function fetchData() {
+        try {
+          var response = await fetch('/api/todoList');
+          var data = await response.json();
+          var jsonVariable = data;
+          console.log(jsonVariable);
+          return jsonVariable
+        } catch (err) {
+          throw(err);
+        }
+      };
+      // create todo list array
+      var todoItems = fetchData();
+      // Add todo item
+      $('form').submit(function(e) {
+        e.preventDefault();
+        var newTodo = {
+            title: $('#newTodoTitle').val(),
+            desc: $('#newTodoDesc').val(),
+            dueDate: $('#newTodoDueDate').val(),
+            complete: $('#newTodoComplete').val(),
+        };
+        if (newTodo.title !== "" && newTodo.desc !== "" && newTodo.dueDate !== "") {
+          if (newTodo in todoItems) {
+            alert("That todo item already exists. How about editing or deleting it?");
+          }
+          else {
+            // todoItems.push(newTodo)
+            fetch(`/api/todoListCtrl/?role=add&title=${newTodo.title}&desc=${newTodo.desc}&due-date=${newTodo.dueDate}&completed=${newTodo.completed}`)
+              .then(response => response.json())
+              .then(data => {
+                var jsonVariable = data;
+                console.log(jsonVariable);
+              })
+              .catch(error => {throw(error)})
+            ;
+            $('#newTodoTitle').val('');
+            $('#newTodoDesc').val('');
+            $('#newTodoDueDate').val('');
+          }
+        }
+      });
+      // Remove todo item
+      $('#todoList').on('click', 'li .btn-outline-danger', function() {
+        $(this).parent().remove();
+      });
+      // Edit todo item
+      $('#todoList').on('click', 'li .btn-outline-success', function() {
+        var currentTodo = $(this).siblings().first().text().trim();
+        var newTodoTitle = prompt("What would you like to change this todo item title to?", currentTodo);
+        if (newTodo && newTodo.trim() !== '') {
+          $(this).siblings().first().text(newTodo);
+        }
+      });
+    });
+  </script>
+</body>
+</html>
