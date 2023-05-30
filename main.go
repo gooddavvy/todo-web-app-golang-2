@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"html/template"
 	"io/ioutil"
 	"log"
@@ -205,13 +206,13 @@ func TodoListCtrl(w http.ResponseWriter, r *http.Request) {
 func main() {
 	getJson()
 
-	/*http.HandleFunc("/", Home)
+	http.HandleFunc("/", Home)
 	http.HandleFunc("/api/todoList", TodoList)
 	http.HandleFunc("/api/todoListCtrl", TodoListCtrl)
 	// http.HandleFunc("/api/todoListEdit", todoListEdit)
 
 	fmt.Println("Server started on port " + port)
-	http.ListenAndServe(":"+port, nil) */
+	http.ListenAndServe(":"+port, nil)
 
 	replaceFn(list, TodoItem{}, TodoItem{Title: "hi"})
 }
