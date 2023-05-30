@@ -4,16 +4,25 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"io/ioutil"
 	"log"
 	"net/http"
-
-	// interfaceMod "github.com/gooddavvy/todo-web-app-golang/interface"
-	"io/ioutil"
+	// interfaceMod "github.com/gooddavvy/todo-web-app-golang-2/interface"
 )
 
 var (
-	port = "1055"
-	list []TodoItem
+	port        = "1055"
+	list        []TodoItem
+	currentRole Role
+)
+
+type Role string
+type TodoListCtrlType = func([]TodoItem, TodoItem) (string, string)
+
+const (
+	Add     Role = "add"
+	Replace Role = "replace"
+	Delete  Role = "delete"
 )
 
 type TodoItem struct {
@@ -29,6 +38,81 @@ type CtrlMessage struct {
 	Type    string `json:"type"`
 }
 
+func addFn(todoItems []TodoItem, todoItem TodoItem) (string, string) {
+	currentRole = "add"
+	todoItems = append(todoItems, todoItem)
+
+	updatedData, err := json.MarshalIndent(list, "", "  ")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Write the updated JSON data back to the file
+	if err := ioutil.WriteFile("todos.json", updatedData, 0644); err != nil {
+		log.Fatal(err)
+	}
+
+	return "Successfully added!", ""
+}
+
+func deleteFn(todoItems []TodoItem, todoItem TodoItem) (string, string) {
+	currentRole = "delete"
+	i := 0
+	for i <= len(todoItems) {
+		if todoItems[i] == todoItem {
+			todoItems = append(todoItems[:i], todoItems[(i+1):]...)
+			break
+		} else {
+			i++
+		}
+	}
+
+	updatedData, err := json.MarshalIndent(list, "", "  ")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Write the updated JSON data back to the file
+	if err := ioutil.WriteFile("todos.json", updatedData, 0644); err != nil {
+		log.Fatal(err)
+	}
+
+	return "Successfully deleted.", ""
+}
+
+func replaceFn(todoItems []TodoItem, todoItem TodoItem, newTodoItem TodoItem) (string, string) {
+	currentRole = "replace"
+	i := 0
+	for i <= len(todoItems) {
+		if todoItems[i] == todoItem {
+			todoItems[i] = newTodoItem
+			break
+		} else {
+			i++
+		}
+	}
+
+	updatedData, err := json.MarshalIndent(list, "", "  ")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Write the updated JSON data back to the file
+	if err := ioutil.WriteFile("todos.json", updatedData, 0644); err != nil {
+		log.Fatal(err)
+	}
+
+	return "Successfully replaced.", ""
+}
+
+func TodoListCtrls() (
+	TodoListCtrlType,
+	TodoListCtrlType,
+	func([]TodoItem, TodoItem, TodoItem) (string, string),
+) {
+	return addFn, deleteFn, replaceFn
+}
+
 func getJson() {
 	// Read JSON file
 	data, err := ioutil.ReadFile("todos.json")
@@ -40,6 +124,7 @@ func getJson() {
 	err = json.Unmarshal(data, &list)
 	if err != nil {
 		panic(err)
+
 	}
 }
 
@@ -63,7 +148,7 @@ func TodoList(w http.ResponseWriter, r *http.Request) {
 }
 
 func TodoListCtrl(w http.ResponseWriter, r *http.Request) {
-	/* queries := r.URL.Query()
+	queries := r.URL.Query()
 
 	title := queries.Get("title")
 	desc := queries.Get("desc")
@@ -71,47 +156,51 @@ func TodoListCtrl(w http.ResponseWriter, r *http.Request) {
 	completed := queries.Get("completed")
 	role := queries.Get("role")
 
+	add, delete, _ := TodoListCtrls()
+	newTodoItem := TodoItem{
+		Title:     title,
+		Desc:      desc,
+		DueDate:   dueDate,
+		Completed: completed,
+	}
+	success := true
+	Error := ""
+
 	if role == "add" {
-		list = append(list, TodoItem{
-			Title:     title,
-			Desc:      desc,
-			DueDate:   dueDate,
-			Completed: completed,
-			ID:        len(list) + 1,
-		})
-
-		updatedData, err := json.Marshal(list)
-		if err != nil {
-			panic(err)
-		}
-
-		err = ioutil.WriteFile("todos.json", updatedData, 0644)
-		if err != nil {
-			panic(err)
+		_, err := add(list, newTodoItem)
+		if err != "" {
+			success = false
+			Error = err
 		}
 	} else if role == "remove" {
-		i := 0
-		for i < len(list) {
-			item := TodoItem{Title: title, Desc: desc, DueDate: dueDate, Completed: completed}
-			if list[i] == item {
-				list = append(list[:i], list[i+1:]...)
-			}
-			i++
+		_, err := delete(list, newTodoItem)
+		if err != "" {
+			success = false
+			Error = err
 		}
 	}
 
 	message := ""
 	typeOfMessage := ""
-	if role == "add" {
+
+	if role == "add" && success {
 		message = "Successfully added todo item to the list!"
 		typeOfMessage = "success"
-	} else if role == "remove" {
+	} else if role == "remove" && success {
 		message = "Successfully removed todo item from the list!"
 		typeOfMessage = "success"
 	}
 
+	if role == "add" && !success {
+		message = "Error: " + Error
+		typeOfMessage = "unsuccess"
+	} else if role == "remove" && !success {
+		message = "Error: " + Error
+		typeOfMessage = "unsuccess"
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(CtrlMessage{Message: message, Type: typeOfMessage}) */
+	json.NewEncoder(w).Encode(CtrlMessage{Message: message, Type: typeOfMessage})
 }
 
 func main() {
