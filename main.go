@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"html/template"
 	"io/ioutil"
 	"log"
@@ -38,9 +37,9 @@ type CtrlMessage struct {
 	Type    string `json:"type"`
 }
 
-func addFn(todoItems []TodoItem, todoItem TodoItem) (string, string) {
+func addFn(list []TodoItem, todoItem TodoItem) (string, string) {
 	currentRole = "add"
-	todoItems = append(todoItems, todoItem)
+	list = append(list, todoItem)
 
 	updatedData, err := json.MarshalIndent(list, "", "  ")
 	if err != nil {
@@ -55,12 +54,12 @@ func addFn(todoItems []TodoItem, todoItem TodoItem) (string, string) {
 	return "Successfully added!", ""
 }
 
-func deleteFn(todoItems []TodoItem, todoItem TodoItem) (string, string) {
+func deleteFn(list []TodoItem, todoItem TodoItem) (string, string) {
 	currentRole = "delete"
 	i := 0
-	for i <= len(todoItems) {
-		if todoItems[i] == todoItem {
-			todoItems = append(todoItems[:i], todoItems[(i+1):]...)
+	for i <= len(list) {
+		if list[i] == todoItem {
+			list = append(list[:i], list[(i+1):]...)
 			break
 		} else {
 			i++
@@ -80,12 +79,12 @@ func deleteFn(todoItems []TodoItem, todoItem TodoItem) (string, string) {
 	return "Successfully deleted.", ""
 }
 
-func replaceFn(todoItems []TodoItem, todoItem TodoItem, newTodoItem TodoItem) (string, string) {
+func replaceFn(list []TodoItem, todoItem TodoItem, newTodoItem TodoItem) (string, string) {
 	currentRole = "replace"
 	i := 0
-	for i <= len(todoItems) {
-		if todoItems[i] == todoItem {
-			todoItems[i] = newTodoItem
+	for i <= len(list) {
+		if list[i] == todoItem {
+			list[i] = newTodoItem
 			break
 		} else {
 			i++
@@ -206,11 +205,13 @@ func TodoListCtrl(w http.ResponseWriter, r *http.Request) {
 func main() {
 	getJson()
 
-	http.HandleFunc("/", Home)
+	/*http.HandleFunc("/", Home)
 	http.HandleFunc("/api/todoList", TodoList)
 	http.HandleFunc("/api/todoListCtrl", TodoListCtrl)
 	// http.HandleFunc("/api/todoListEdit", todoListEdit)
 
 	fmt.Println("Server started on port " + port)
-	http.ListenAndServe(":"+port, nil)
+	http.ListenAndServe(":"+port, nil) */
+
+	replaceFn(list, TodoItem{}, TodoItem{Title: "hi"})
 }
